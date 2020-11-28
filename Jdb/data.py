@@ -223,9 +223,9 @@ class base:
         async def c(s):
             return lzma.compress(s)
         s = tuple(b','.join(each) for each in self.de)
-        fs = [c(i) for i in s]
         loop = asyncio.get_event_loop()
-        rs = loop.run_until_complete(asyncio.gather(*fs))
+        t = tuple(c(i) for i in s)
+        rs = loop.run_until_complete(asyncio.gather(*t))
         return b'\n'.join(rs)
 
     def __del__(self):
