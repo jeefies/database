@@ -25,19 +25,11 @@ class base:
 
     @classmethod
     def _85enb(cls, x):
-        try:
-            return csv_b85cen(cls.to_bytes(x))
-        except Exception as e:
-            print(x, '::encode error:', e)
-            raise e
+        return csv_b85cen(cls.to_bytes(x))
 
     @classmethod
     def _85deb(cls, x):
-        try:
-            return csv_b85cde(x)
-        except Exception as e:
-            print(x)
-            raise e
+        return csv_b85cde(x)
 
     _enb = _85enb
     _deb = _85deb
@@ -92,8 +84,7 @@ class base:
                 r, a = self._sockr.recvfrom(1)
                 if r == b's':
                     self.__adi()
-            except Exception as e:
-                pass
+            except: pass
 
     def __adi(self):
         l = self.__adds.popleft()
@@ -166,10 +157,7 @@ class base:
             try:
                 return codecs.decode(s, encode)
             except:
-                try:
-                    return codecs.decode(s)
-                except Exception as e:
-                    raise e
+                return codecs.decode(s)
         else:
             return str(s)
 
@@ -201,7 +189,7 @@ class base:
             return 1
 
     def __str__(self):
-        return self.to_string(self._bytes())
+        return repr(self._bytes())[2:-1]
 
     def init(self):
         if not os.path.exists(self.file):

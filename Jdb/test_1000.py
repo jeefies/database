@@ -7,9 +7,10 @@ from .data import base
 
 def test():
     b = base(os.getcwd(), Inet=1)
+    b.reset()
 
     fk = Faker()
-    dts = [(fk.name().encode(), fk.color().encode) for _ in range(1000)]
+    dts = [(fk.name().encode(), fk.color().encode()) for _ in range(1000)]
 
     b.add_all(dts)
 
@@ -28,4 +29,8 @@ def test():
     print('search use', ut, 's')
     print('result', a)
     assert a
+    assert str(a)
+    b.update()
+    b.reset()
+    b.init()
 
