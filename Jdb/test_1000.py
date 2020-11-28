@@ -1,5 +1,6 @@
 import time, os
 from timeit import timeit
+from threading import Thread
 
 from faker import Faker
 
@@ -29,8 +30,9 @@ def test():
     print('search use', ut, 's')
     print('result', a)
     assert a
-    assert str(a)
-    b.update()
-    b.reset()
+    print('getting str')
+    s = str(b)
+    print('ok')
     b.init()
+    print('create new file')
 

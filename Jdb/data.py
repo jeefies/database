@@ -25,7 +25,10 @@ class base:
 
     @classmethod
     def _85enb(cls, x):
-        return csv_b85cen(cls.to_bytes(x))
+        try:
+            return csv_b85cen(cls.to_bytes(x))
+        except Exception as e:
+            print('encode error::', x); raise e
 
     @classmethod
     def _85deb(cls, x):
