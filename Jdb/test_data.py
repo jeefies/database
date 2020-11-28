@@ -1,10 +1,11 @@
 import os
 import io
+import bz2
 import time
 import codecs
 from faker import Faker
+from timeit import timeit
 from collections import deque
-from contextlib import redirect_stdout as rds
 
 from .data import base
 
@@ -39,7 +40,6 @@ class TestData:
     
     def test_reset(self):
         print('test reset f')
-        time.sleep(0.3)
         self.data.reset()
         assert not self.data.de
 
@@ -50,15 +50,15 @@ class TestData:
         
         dts = [(fk.color().encode(), fk.name().encode(), fk.country().encode()) for _ in range(100)]
 
-        adt = time.time()
-        for a in dts:
-            self.data.add(*a)
-        adt = time.time() - adt
+        t = time.time()
+        for a in dts: self.data.add(*a)
+        adt = time.time() - t
+        
         print("add 100 use", adt)
         time.sleep(1)
-        srt = time.time()
+        t = time.time()
         re = self.data.deepsearch(dts[-1][0], 0)
-        srt = time.time() - srt
+        srt = time.time() - t
         print('search time', srt)
         assert re, (re, self.data.de)
         re = re[-1][1]
@@ -92,19 +92,18 @@ class TestEnDe:
         del self.base
 
 class TestInit:
-    def setup(self):
+    def setup_class(self):
         print('test init init')
         self.d = base(os.getcwd(), 'testinit')
-        os.remove(self.d.file)
-        self.d.init()
         fk = self.fk = Faker()
         ns = [(fk.name(), fk.country()) for a in range(50)]
         adt = time.time()
         self.d.add_all(ns)
         while len(self.d) != 50: pass 
         ut = time.time() - adt
-        print('use time', ut)
-        self.d.update()
+        print('add 50 use time', ut)
+        upt = timeit(lambda:self.d.update(), number=1)
+        print('update...write..in  use time', upt, '\bs')
 
     def test_read(self):
         print('test read')
@@ -112,10 +111,9 @@ class TestInit:
         print('reading for TestInit')
         adt = time.time()
         b.init()
-        while len(self.d.de) != 50: pass
+        while len(b) != 50: print(len(b)); time.sleep(0.05)
         ut = time.time() - adt
         print('init time use', ut)
-        print(b[:7])
         assert b.de == self.d.de, (str(b.de[5]), str(self.d.de[5]))
         b.quit()
 
@@ -131,13 +129,19 @@ class TestInit:
     def test__index(self):
         d = base(os.getcwd(), 'testinit')
         d.init()
+        while len(d.de) != 50: pass
         assert d[1]
         assert d[1:]
         assert d[-5:]
         assert d[1:10]
         assert d[1::2]
         d.quit()
-        del d
+
+    def teardown_class(self):
+        print('TestInit class teardown')
+        d = base(os.getcwd(), 'testinit')
+        d.quit()
+        d.quit()
 
 class My:
     def __str__(self):
@@ -183,6 +187,18 @@ def test_remove():
     b.reset()
     del b
 
+def test_writein():
+    print('test init init')
+    d = base(os.getcwd(), 'testinit')
+    fk = Faker()
+    ns = [(fk.name(), fk.country()) for a in range(50)]
+    adt = time.time()
+    d.add_all(ns)
+    while len(d) != 50: pass 
+    ut = time.time() - adt
+    print('use time', ut)
+    d.update()
+    print('update...write..in')
 
 '''
 def tesmain():

@@ -1,24 +1,31 @@
 import time, os
+from timeit import timeit
 
 from faker import Faker
 
 from .data import base
 
 def test():
-    b = base(os.getcwd())
+    b = base(os.getcwd(), Inet=1)
 
     fk = Faker()
     dts = [(fk.name().encode(), fk.color().encode) for _ in range(1000)]
 
     b.add_all(dts)
 
-    t = time.time()
-    while len(b) != 1000: pass
-    aut = time.time() - t
+    def w():
+        while len(b) != 1000:
+            pass
+
+    aut = timeit(w, number=1)
     print('add 1000 with no error use', aut, 's')
 
-    t = time.time()
-    re = b.deepsearch(dts[-1][0], 0)
-    ut = time.time() - t
+    def d():
+        global a
+        a = b.deepsearch(dts[-1][0], 0)
+
+    ut = timeit(d, number=1)
     print('search use', ut, 's')
+    print('result', a)
+    assert a
 

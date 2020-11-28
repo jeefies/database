@@ -1,6 +1,7 @@
 import os
 import csv
 import zlib
+import bz2
 import lzma
 import codecs
 import socket
@@ -41,36 +42,43 @@ class base:
     _enb = _85enb
     _deb = _85deb
 
-    def __init__(self, place, name=''):
+    def __init__(self, place, name='', Inet=False):
         pl = os.path.abspath(place)
         if os.path.exists(pl):
             self.pl = pl
             self.name = name
-            self.file = os.path.join(self.pl, '.J{}.csv'.format(name))
+            self.file = os.path.join(self.pl, '{}.Jdb'.format(name))
         else:
             raise FileNotFoundError('No such directory')
         self.de = Deque()
         self.__adds = deque()
 
-        self._sock_path = os.path.join(self.pl, './.J{}.d'.format(name))
-        if os.path.exists(self._sock_path):
-            os.unlink(self._sock_path)
+        def _unix(self):
+            self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            self._sockr = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        
+            self._sock_path = os.path.join(self.pl, './.J{}.d'.format(name))
+            if os.path.exists(self._sock_path):
+                os.unlink(self._sock_path)
 
-        #self._socko = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        def _inet(self):
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self._sockr = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        
+            self._sock_path = ('localhost', 10001)
 
-        # self._socko.bind(self._sock_path)
-        # self._socko.listen(1)
+        if Inet:
+            _inet(self)
+        else:
+            try:
+                _unix(self)
+            except:
+                _inet()
 
-        #self._sockr = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        # self._sockr.connect(self._sock_path)
-        #self._sock, addr = self._socko.accept()
-
-        # above for tcp socket connection
-        # below for upd connection
-
-        self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        self._sockr = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sockr.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._sockr.bind(self._sock_path)
+
 
         self._add_thrs = [Thread(target=self._Addthr) for _ in range(5)]
         [x.setDaemon(True) for x in self._add_thrs]
@@ -125,7 +133,7 @@ class base:
             return 1
 
     def update(self):
-        with open(self.file, 'wb') as f:
+        with bz2.open(self.file, 'wb', 9) as f:
             return f.write(self._bytes())
 
     def deepsearch(self, exp, col=None):
@@ -198,23 +206,24 @@ class base:
     def init(self):
         if not os.path.exists(self.file):
             codecs.open(self.file, 'x').close()
+            return None
 
-        with codecs.open(self.file, 'rb') as f:
+        with bz2.open(self.file, 'rb') as f:
             def lines():
                 l = b''
+                e = 0
                 while 1:
-                    l += f.readline().strip()
+                    l += f.readline()
                     if not l:
-                        break
-                    if l.endswith(b'YZ'):
-                        try:
-                            yield lzma.decompress(l)
-                        except Exception as e:
-                            print(l)
-                            raise e
+                        e += 1
+                        if e > 2:
+                            break
+                        else:
+                            continue
+                    if l.endswith(b'YZ\n') or l.endswith(b'YZ'):
+                        yield lzma.decompress(l.strip())
                         l = b''
-                    else:
-                        l += b'\n'
+                        e = 0
 
             for l in lines():
                 self.de.append(deque(l.split(b',')))
