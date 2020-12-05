@@ -39,6 +39,7 @@ class TestData:
 
     
     def test_reset(self):
+        time.sleep(0.2)
         print('test reset f')
         self.data.reset()
         assert not self.data.de
@@ -89,6 +90,7 @@ class TestEnDe:
         ns = [fk.name().encode() for a in range(200)]
         print('test ende making data f')
         list(map(self.t, ns))
+        self.base.quit()
         del self.base
 
 class TestInit:
@@ -141,7 +143,6 @@ class TestInit:
         print('TestInit class teardown')
         d = base(os.getcwd(), 'testinit')
         d.quit()
-        d.quit()
 
 class My:
     def __str__(self):
@@ -185,6 +186,7 @@ def test_remove():
     assert len(b) == 9
     print(b[:], dts[:], sep='\n')
     b.reset()
+    b.quit()
     del b
 
 def test_writein():
@@ -199,38 +201,5 @@ def test_writein():
     print('use time', ut)
     d.update()
     print('update...write..in')
+    d.quit()
 
-'''
-def tesmain():
-    db = base(os.getcwd(), 'test')
-    fk = Faker()
-    b = fk.binary(1000)
-    b = tuple([b[a::250]] for a in range(1, 250))
-    #b = tuple([fk.name()] for a in range(1, 250))
-    sta = time.time()
-    db.add_all(b)
-    while len(db.de) != len(b): pass
-    ut = time.time() - sta
-    print(ut)
-    db.update()
-    del db
-
-def tesmain2():
-    db = base(os.getcwd(), 'test')
-    fk = Faker()
-    print('generating datas')
-    b = tuple([fk.name()] for a in range(10000))
-    print('adding')
-    sta = time.time()
-    db.add_all(b)
-    while len(db.de) != len(b): pass
-    ut = time.time() - sta
-    print(ut)
-    print(db.quit())
-
-
-if __name__ == '__main__':
-    #for a in range(10):
-    #    testmain()
-    tesmain2()
-'''

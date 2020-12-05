@@ -13,12 +13,18 @@ class My(Model):
 def testmy():
     b = My(os.getcwd(), 'model')
     fk = Faker()
-    dts = [(fk.name(), randint(1, 500)) for _ in range(100)]
+    n = 99
+    dts = [(fk.name(), randint(1, 500)) for _ in range(n)]
     b.add_all(dts)
-    time.sleep(0.5)
-    assert len(b) == 100
-    re = b.search(dts[-1][0])[0]
+    while len(b) < n: pass
+    print(len(b))
+    print(*[b._deb(i) for i in b.de[-1][1]])
+    print(*[b._deb(i) for i in b.de[-3][1]])
+    print(*[b._deb(i) for i in b.de[-2][1]])
+    re = b.search(dts[-1][0])
+    re = re[-1]
     r = re[1]
     print(re, r)
     assert r['name'] == dts[-1][0] and r['key'] == dts[-1][1], (re, r)
     assert r == b[re[0]]
+    b.reset()

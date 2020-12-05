@@ -30,9 +30,6 @@ def test():
     print('search use', ut, 's')
     print('result', a)
     assert a
-    print('getting str')
-    s = str(b)
-    print('ok')
     b.init()
     print('create new file')
 

@@ -27,18 +27,16 @@ class Model(base):
 
     def _org(self, row):
         r = dict()
-        de = ((self._deb(i) if i else b'') for i in row)
-        for v,t, k in zip(de, self.__cols_type, self.__cols):
-            if v:
-                r[k] = t(self.to_string(v))
-            else:
-                r[k] = t()
-        return r
+        de = self._deb
+        ge = ((de(i) if i else b'') for i in row)
+        ts = self.to_string
+        return {k:(t(ts(v)) if v else t()) for v,t,k in zip(ge, self.__cols_type, self.__cols)}
 
     def _anain(self, args):
-        a = deque(self._enb(i) for i in args)
-        la = len(args)
-        e = self.__coll - la
+        tb = self.to_bytes
+        en = self._enb
+        a = deque(en(tb(v)) for v in args)
+        e = self.__coll - len(a)
         if e < 0: raise OverflowError("Data overflow")
         a.extend((b'',) * e)
         return a
