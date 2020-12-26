@@ -14,6 +14,19 @@ from ..csvbase import csv_b64cen, csv_b64cde, csv_b85cen, csv_b85cde
 
 
 class base:
+    _instance = {}
+
+    def __new__(self, place, name='', Inet=False):
+        ins = self._instance
+        if place in ins:
+            if name in ins[place]:
+                return ins[place][name]
+            else:
+                ins[place][name] = super().__new__(self)
+                return ins[place][name]
+        else:
+            ins[place] = {name: super().__new__(self)}
+            return ins[place][name]
 
     @classmethod
     def _64enb(cls, x):
@@ -24,11 +37,14 @@ class base:
         return csv_b64cde(x)
 
     @classmethod
-    def _85enb(cls, x):
+    def _85enb(cls, x, _e = 0):
         try:
             return csv_b85cen(cls.to_bytes(x))
         except Exception as e:
-            print('encode error::', x); raise e
+            if _e:
+                print(x, '(encode Error::', e)
+                raise e
+            cls._85enb(x, _e)
 
     @classmethod
     def _85deb(cls, x):
@@ -39,6 +55,7 @@ class base:
 
     def __init__(self, place, name='', Inet=False):
         self._sock_inet = Inet
+        self._pl = place
         pl = os.path.abspath(place)
         if os.path.exists(pl):
             self.pl = pl
@@ -47,7 +64,7 @@ class base:
         else:
             raise FileNotFoundError('No such directory')
         self.de = Deque()
-        self.__adds = deque()
+        self._adds = deque()
 
         def _unix(self):
             assert not Inet
@@ -85,12 +102,14 @@ class base:
                 # recvfrom for udp connection, recv for tcp
                 r, a = self._sockr.recvfrom(1)
                 if r == b's':
-                    self.__adi()
+                    self._adi()
+                else:
+                    break
             except Exception as e:
                 print(e)
 
-    def __adi(self):
-        l = self.__adds.popleft()
+    def _adi(self):
+        l = self._adds.popleft()
         ai = self._anain(l)
         self.de.append(ai)
 
@@ -105,11 +124,11 @@ class base:
         return args
 
     def _add(self, args):
-        self.__adds.append(args)
+        self._adds.append(args)
         self._sock.sendto(b's', self._sock_path)
 
     def add_all(self, li_tup):
-        self.__adds.extend(li_tup)
+        self._adds.extend(li_tup)
         sp = self._sock_path
         sk = self._sock
         for _ in li_tup:
@@ -131,34 +150,26 @@ class base:
         with bz2.open(self.file, 'wb', 2) as f:
             return f.write(self._bytes())
 
-    def deepsearch(self, exp, col=None):
-        de = self.de.copy()
-        exp = self._enb(exp)
-        res = deque()
+    def modify(self, index, vals):
+        self.remove(index)
+        self.add(index)
 
-        async def find(d, r):
+    def deepsearch(self, exp, col=None):
+        exp = self._enb(exp)
+
+        def find(d, r):
             ap = r.append
             org = self._org
-            pop = d.pop
             if col is None:
                 cond = lambda o : exp in o
             else:
                 cond = lambda o : exp == o[col]
 
-            while 1:
-                try:
-                    i, out = pop()
-                    if cond(out):
-                        ap((i, org(out)))
-                except Exception as e:
-                    if not isinstance(e, IndexError):
-                        print(e)
-                    return 0
-
-        li = [find(de, res) for _ in range(5)]
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.wait(li))
-        return res
+            for i, val in d.iter():
+                    if cond(val):
+                        ap((i, org(val)))
+            return r
+        return find(self.de, deque())
 
     def _org(self, de):
         return deque(self._deb(i) for i in de)
@@ -191,17 +202,43 @@ class base:
             return codecs.encode(cls.to_string(b), encode)
 
     def quit(self):
+        _e = 0
+
+        try:
+            for a in range(5):
+                self._sock.sendto(b'q', self._sock_path)
+        except Exception as e:
+            _e = 1
+
         try:
             if isinstance(self._sock_path, str):
                 sockname = os.path.basename(self._sock_path)
+        except Exception as e:
+            _e = 1
+
+        try:
             while sockname in os.listdir(self.pl):
                 os.remove(self._sock_path)  # remove socket use file
+        except Exception as e:
+            _e = 1
+
+        try:
+            self._instance[self._pl].pop(self.name)
+        except Exception as e:
+            _e = 1
+
+        try:
             self._sock.shutdown(socket.SHUT_RDWR)
             self._sockr.shutdown(socket.SHUT_RDWR)
-            self.update()
-            return 0
         except Exception as e:
-            return 1
+            _e = 1
+
+        try:
+            self.update()
+        except Exception as e:
+            _e = 1
+
+        return _e
 
     def init(self):
         if not os.path.exists(self.file):
@@ -231,7 +268,7 @@ class base:
     def _bytes(self):
         async def c(s):
             return lzma.compress(s)
-        s = tuple(b','.join(each) for each in self.de)
+        s = tuple(b','.join((e if e else b'')for e in each) for each in self.de)
         loop = asyncio.get_event_loop()
         t = tuple(c(i) for i in s)
         rs = loop.run_until_complete(asyncio.gather(*t))

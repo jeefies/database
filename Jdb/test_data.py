@@ -11,24 +11,25 @@ from .data import base
 
 
 class TestData:
-    def setup(self):
-        self.data = base(os.getcwd())
 
     def test_add(self):
+        data = base(os.getcwd(), '1')
         print('test add f')
-        self.data.add('line', 'row', 'hello', 'world')
+        data.add('line', 'row', 'hello', 'world')
         time.sleep(0.1)
-        assert self.data.de, "No data in"
-        ad = self.data._index(0)
+        assert data.de, "No data in"
+        ad = data._index(0)
         assert b'line' in ad or ad[-1] == b'world', "Data error, {}".format(str(ad))
+        data.reset()
 
 
     def test_search(self):
+        data = base(os.getcwd(), '2')
         print('test search f')
-        self.data.add('2', 'line2', 'rwo22')
+        data.add('2', 'line2', 'rwo22')
         time.sleep(0.1)
         t = time.time()
-        re = self.data.deepsearch('line2', 1)
+        re = data.deepsearch('line2', 1)
         ut = time.time() - t
         print('use time', ut, 's')
         assert len(re) == 1, "No data? {}".format(re)
@@ -39,59 +40,61 @@ class TestData:
 
     
     def test_reset(self):
-        time.sleep(0.2)
+        data = base(os.getcwd(), '3')
         print('test reset f')
-        self.data.reset()
-        assert not self.data.de
+        data.reset()
+        assert not data.de
 
 
     def test_many(self):
+        data = base(os.getcwd(), '4')
         print('test many f')
         fk = Faker()
         
         dts = [(fk.color().encode(), fk.name().encode(), fk.country().encode()) for _ in range(100)]
 
         t = time.time()
-        for a in dts: self.data.add(*a)
+        for a in dts: data.add(*a)
         adt = time.time() - t
         
         print("add 100 use", adt)
         time.sleep(1)
         t = time.time()
-        re = self.data.deepsearch(dts[-1][0], 0)
+        re = data.deepsearch(dts[-1][0], 0)
         srt = time.time() - t
         print('search time', srt)
-        assert re, (re, self.data.de)
+        assert re, (re, data.de)
         re = re[-1][1]
         print("search result:", re, end='\n\n')
         
-        assert dts[-1][1] in re or re[-1] == dts[-1][-1], str(tuple(map(self.data._org, self.data[-5:])))
-        self.data.reset()
-        del self.data
+        assert dts[-1][1] in re or re[-1] == dts[-1][-1], str(tuple(map(data._org, data[-5:])))
+        data.reset()
+        del data
 
 
 class TestEnDe:
-    def setup(self):
-        self.base = base(os.getcwd())
 
     def t(self, x):
-        e = self.base._64enb(x)
+        sbase = base
+        e = sbase._64enb(x)
         assert not b',' in e
-        o = self.base._64deb(e)
+        o = sbase._64deb(e)
         assert o == x
-        e = self.base._85enb(x)
+        e = sbase._85enb(x)
         assert not b',' in e
-        o = self.base._85deb(e)
+        o = sbase._85deb(e)
         assert o == x
 
     def test_1(self):
+        sbase = base(os.getcwd(), '1')
         print('test ende f')
         fk = Faker()
         ns = [fk.name().encode() for a in range(200)]
         print('test ende making data f')
         list(map(self.t, ns))
-        self.base.quit()
-        del self.base
+        sbase.quit()
+        sbase.reset()
+        del sbase
 
 class TestInit:
     def setup_class(self):
@@ -106,8 +109,12 @@ class TestInit:
         print('add 50 use time', ut)
         upt = timeit(lambda:self.d.update(), number=1)
         print('update...write..in  use time', upt, '\bs')
+        self.read()
+        self.index()
+        self._index()
+        self.d.reset()
 
-    def test_read(self):
+    def read(self):
         print('test read')
         b = base(os.getcwd(), 'testinit')
         print('reading for TestInit')
@@ -119,7 +126,7 @@ class TestInit:
         assert b.de == self.d.de, (str(b.de[5]), str(self.d.de[5]))
         b.quit()
 
-    def test_index(self):
+    def index(self):
         print('test index f')
         print('index..', end='')
         i = deque()
@@ -128,7 +135,7 @@ class TestInit:
             i.append(d)
         print('.')
 
-    def test__index(self):
+    def _index(self):
         d = base(os.getcwd(), 'testinit')
         d.init()
         while len(d.de) != 50: pass
@@ -143,6 +150,7 @@ class TestInit:
         print('TestInit class teardown')
         d = base(os.getcwd(), 'testinit')
         d.quit()
+        d.reset()
 
 class My:
     def __str__(self):
@@ -178,7 +186,7 @@ def test_remove():
     fk = Faker()
     dts = [(fk.name().encode(), ) for _ in range(10)]
     b.add_all(dts)
-    time.sleep(0.2)
+    while len(b) < 10:pass
     i, v = b.deepsearch(dts[1][0])[0]
     assert v, (b.de, "No search res")
     assert tuple(v) == dts[1], (i, v)
@@ -202,4 +210,5 @@ def test_writein():
     d.update()
     print('update...write..in')
     d.quit()
+    d.reset()
 
