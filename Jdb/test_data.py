@@ -7,13 +7,13 @@ from faker import Faker
 from timeit import timeit
 from collections import deque
 
-from .data import base
+from .data import Base
 
 
 class TestData:
 
     def test_add(self):
-        data = base(os.getcwd(), '1')
+        data = Base(os.getcwd(), '1')
         print('test add f')
         data.add('line', 'row', 'hello', 'world')
         time.sleep(0.1)
@@ -24,7 +24,7 @@ class TestData:
 
 
     def test_search(self):
-        data = base(os.getcwd(), '2')
+        data = Base(os.getcwd(), '2')
         print('test search f')
         data.add('2', 'line2', 'rwo22')
         time.sleep(0.1)
@@ -40,14 +40,14 @@ class TestData:
 
     
     def test_reset(self):
-        data = base(os.getcwd(), '3')
+        data = Base(os.getcwd(), '3')
         print('test reset f')
         data.reset()
         assert not data.de
 
 
     def test_many(self):
-        data = base(os.getcwd(), '4')
+        data = Base(os.getcwd(), '4')
         print('test many f')
         fk = Faker()
         
@@ -75,31 +75,31 @@ class TestData:
 class TestEnDe:
 
     def t(self, x):
-        sbase = base
-        e = sbase._64enb(x)
+        sBase = Base
+        e = sBase._64enb(x)
         assert not b',' in e
-        o = sbase._64deb(e)
+        o = sBase._64deb(e)
         assert o == x
-        e = sbase._85enb(x)
+        e = sBase._85enb(x)
         assert not b',' in e
-        o = sbase._85deb(e)
+        o = sBase._85deb(e)
         assert o == x
 
     def test_1(self):
-        sbase = base(os.getcwd(), '1')
+        sBase = Base(os.getcwd(), '1')
         print('test ende f')
         fk = Faker()
         ns = [fk.name().encode() for a in range(200)]
         print('test ende making data f')
         list(map(self.t, ns))
-        sbase.quit()
-        sbase.reset()
-        del sbase
+        sBase.quit()
+        sBase.reset()
+        del sBase
 
 class TestInit:
     def setup_class(self):
         print('test init init')
-        self.d = base(os.getcwd(), 'testinit')
+        self.d = Base(os.getcwd(), 'testinit')
         fk = self.fk = Faker()
         ns = [(fk.name(), fk.country()) for a in range(50)]
         adt = time.time()
@@ -116,7 +116,7 @@ class TestInit:
 
     def read(self):
         print('test read')
-        b = base(os.getcwd(), 'testinit')
+        b = Base(os.getcwd(), 'testinit')
         print('reading for TestInit')
         adt = time.time()
         b.init()
@@ -136,7 +136,7 @@ class TestInit:
         print('.')
 
     def _index(self):
-        d = base(os.getcwd(), 'testinit')
+        d = Base(os.getcwd(), 'testinit')
         d.init()
         while len(d.de) != 50: pass
         assert d[1]
@@ -148,7 +148,7 @@ class TestInit:
 
     def teardown_class(self):
         print('TestInit class teardown')
-        d = base(os.getcwd(), 'testinit')
+        d = Base(os.getcwd(), 'testinit')
         d.quit()
         d.reset()
 
@@ -158,7 +158,7 @@ class My:
 
 def test_to_string():
     print('test to string f')
-    ba = base(os.getcwd(), 'testinit')
+    ba = Base(os.getcwd(), 'testinit')
     ba.init()
     db = ba.to_bytes(ba)
     assert ba.to_bytes(ba) == ba._bytes()
@@ -176,19 +176,20 @@ def test_to_string():
 def test_path():
     print('test path')
     try:
-        b = base('/hm/p/slo')
+        b = Base('/hm/p/slo')
     except FileNotFoundError:
         pass
 
 def test_remove():
     print('test rev')
-    b = base(os.getcwd(), 'tr')
+    b = Base(os.getcwd(), 'tr')
     fk = Faker()
     dts = [(fk.name().encode(), ) for _ in range(10)]
     b.add_all(dts)
     while len(b) < 10:pass
-    i, v = b.deepsearch(dts[1][0])[0]
-    assert v, (b.de, "No search res")
+    re = b.deepsearch(dts[1][0])
+    assert re, (b.de, "No search res")
+    i, v = re[0]
     assert tuple(v) == dts[1], (i, v)
     b.remove(i)
     assert len(b) == 9
@@ -199,7 +200,7 @@ def test_remove():
 
 def test_writein():
     print('test init init')
-    d = base(os.getcwd(), 'testinit')
+    d = Base(os.getcwd(), 'testinit')
     fk = Faker()
     ns = [(fk.name(), fk.country()) for a in range(50)]
     adt = time.time()

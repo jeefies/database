@@ -1,1 +1,2 @@
-from .data import base
+from .data import Base
+from .model import Model

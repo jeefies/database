@@ -9,11 +9,12 @@ import asyncio
 from collections import deque
 from threading import Thread
 
-from ..mydeque import Deque
+from .._mydeque import Deque
 from ..csvbase import csv_b64cen, csv_b64cde, csv_b85cen, csv_b85cde
+from ..coder import LZMACoder
 
 
-class base:
+class Base:
     _instance = {}
 
     def __new__(self, place, name='', Inet=False):
@@ -53,7 +54,7 @@ class base:
     _enb = _85enb
     _deb = _85deb
 
-    def __init__(self, place, name='', Inet=False):
+    def __init__(self, place, name='', coder=LZMACoder, Inet=False):
         self._sock_inet = Inet
         self._pl = place
         pl = os.path.abspath(place)
@@ -65,6 +66,7 @@ class base:
             raise FileNotFoundError('No such directory')
         self.de = Deque()
         self._adds = deque()
+        self._coder = coder
 
         def _unix(self):
             assert not Inet
@@ -190,7 +192,7 @@ class base:
     def to_bytes(cls, b, encode='utf-8'):
         if isinstance(b, (bytes, bytearray)):
             return b
-        if isinstance(b, base):
+        if isinstance(b, Base):
             return b._bytes()
         try:
             return codecs.encode(b, encode)
@@ -246,33 +248,11 @@ class base:
             return None
 
         with bz2.open(self.file, 'rb') as f:
-            def lines():
-                l = b''
-                e = 0
-                while 1:
-                    l += f.readline()
-                    if not l:
-                        e += 1
-                        if e > 2:
-                            break
-                        else:
-                            continue
-                    if l.endswith(b'YZ\n') or l.endswith(b'YZ'):
-                        yield lzma.decompress(l.strip())
-                        l = b''
-                        e = 0
-
-            for l in lines():
+            for l in self._coder.decode(f):
                 self.de.append(deque(l.split(b',')))
 
     def _bytes(self):
-        async def c(s):
-            return lzma.compress(s)
-        s = tuple(b','.join((e if e else b'')for e in each) for each in self.de)
-        loop = asyncio.get_event_loop()
-        t = tuple(c(i) for i in s)
-        rs = loop.run_until_complete(asyncio.gather(*t))
-        return b'\n'.join(rs)
+        return self._coder.encode(self.de)
 
     def __del__(self):
         return self.quit()

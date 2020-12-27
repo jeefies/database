@@ -4,10 +4,10 @@ from threading import Thread
 
 from faker import Faker
 
-from .data import base
+from .data import Base
 
 def test():
-    b = base(os.getcwd(), Inet=1)
+    b = Base(os.getcwd(), Inet=1)
     b.reset()
 
     fk = Faker()
@@ -32,4 +32,3 @@ def test():
     assert a
     b.init()
     print('create new file')
-

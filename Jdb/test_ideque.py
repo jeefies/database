@@ -1,4 +1,4 @@
-from .mydeque import Deque, MDeque
+from ._mydeque import Deque, MDeque
 
 def test_full():
     de = Deque(range(50))

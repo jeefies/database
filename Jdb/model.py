@@ -1,12 +1,12 @@
 from collections import deque
 
-from .data import base
-from .mydeque import MDeque
+from .data import Base
+from ._mydeque import MDeque
 
-class Model(base):
+class Model(Base):
     __cols__ = ()
-    __support_type = (int, list, tuple, 
-            float, complex)
+    __support_type = (int, float, complex, 
+            str, bytes, bytearray)
 
     def __init__(self, workplace, workname):
         super(Model, self).__init__(workplace, workname)
